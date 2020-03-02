@@ -1,0 +1,296 @@
+
+PARENT STARTER:
+
+        	<parent>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-parent</artifactId>
+                <version>2.2.4.RELEASE</version>
+                <relativePath/> <!-- lookup parent from repository -->
+            </parent>
+
+SPRING BOOT MAVEN PLUGIN:
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+
+        - Helps in easily running Spring Boot applications and also it helps in creating JAR and WAR files.
+
+PROPERTIES:
+
+            <properties>
+                <java.version>1.8</java.version>
+            </properties>
+
+
+SPRING BOOT MAIN CLASS:
+
+            @SpringBootApplication
+            public class WebApplication {
+
+                public static void main(String[] args) {
+                    SpringApplication.run(WebApplication.class, args);
+                }
+            }
+
+
+            @SpringBootApplication  does 2 important things:
+
+                - It is initilize the Spring work
+                - It initializes ComponentScan
+                - It initializes  AutoConfiguration
+
+
+APLLICATION.PROPERTIES:
+
+            - can uses as Apllication Config.
+
+CHANGE LOGGING LEVEL ONLY FOR ONE PACKAGE:
+        
+        - in application.properties:
+
+            logging.level.org.springframework.web=DEBUG
+
+
+SPRING BOOT PARENT:
+
+        - Spring Boot Starter Parent  extends Spring Boot Dependencies
+
+            Why does Hot reload not work with Spring Boot DevTools and Intellij?
+            Here's a quick summary of what you have to do
+
+            Settings --> Build-Execution-Deployment --> Compiler --> enable "Make Project Automatically".
+            Restart IntelliJ.
+            In earlier version of IntelliJ
+
+            Press ctrl+shift+A and search for the registry. Enable following configuration compiler.automake.allow.when.app.running
+
+JSP VIEW RESOLVER:
+
+    IN application.properties:
+
+        spring.mvc.view.prefix=/WEB-INF/jsp/
+        spring.mvc.view.suffix=.jsp
+
+ADD JSP SUPPORT TO SPRING BOOT:
+
+        <dependency>
+			<groupId>org.apache.tomcat.embed</groupId>
+			<artifactId>tomcat-embed-jasper</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+    
+REQUEST PARAMETER:
+
+    @RequestParam String name)   - paramerter in URL
+                                http://localhost:8080/login?name=Marfall
+
+
+    - When controller has some data it puts it in the model an redirects to the view,
+    - The View uses the Model to render  the data on the screen
+
+
+JSP EXAMPLE:
+
+
+            <html>
+            <head>
+                <title>Web Application</title>
+            </head>
+            <body>
+                JSP IS UP AND RUNNING! Welcome ${name}!
+    Your password is ${password}
+            </body>
+            </html>
+
+LOGIN CONTROLLER WITH MODELMAP:
+
+
+            @Controller
+            public class LoginController {
+
+                @GetMapping("/login")
+                public String loginMessage(@RequestParam String name,String password, ModelMap model) {
+                    System.out.println("PARAMETER IS: " + name);
+                    model.put("name", name);
+                    model.put("password", password);
+                    return "login";
+                }
+            }
+
+        Controller says the Dispatcher Servlet: Hey, this is the Model and this is the View;
+        Dispatcher Servlet goes to the View Resolver and says: Hey, View Resolver - I'm asking somebody for "login".
+        View Resolver looks at the configuration and says: Ok, I know how to do that,
+        So View Resolver basically maps  logical name which it gives to a physial jsp.
+        The Dispatcher Servlet makes the view and the mopdel available and executes it.
+
+
+SIMPLE HTML LOGIN FORM:
+
+
+        <html>
+        <head>
+            <title>Web Application</title>
+        </head>
+        <body>
+
+            <form method="post">
+                Name:     <input type="text" name="name"/>
+                Password  <input type="password" name="password"/>
+                        <input type="submit"/>
+            </form>
+        </body>
+        </html>
+
+
+LOGIN CONTROLLER:
+
+        @Controller
+        public class LoginController {
+
+            @GetMapping("/login")
+            public String loginMessage() {
+
+                return "login";
+            }
+
+            @PostMapping("/login")
+            public String showWelcomePage(@RequestParam String name, String password, ModelMap model) {
+
+                model.put("name", name);
+                model.put("password", password);
+                return "welcome";
+            }
+        }
+
+
+SESSION, MODEL, REQUEST:
+
+    - All request paremeters have the scope of that specific request.
+    - Anything that you put in the modek - it is only until that specific request is executed
+    - If you want conditional state  = you have to use something called session
+
+
+
+            @Controller
+            @SessionAttributes("name")
+            public class LoginController {
+
+                @Autowired
+                LoginService service;
+
+                @GetMapping("/login")
+                public String loginMessage() {
+
+                    return "login";
+                }
+
+                @PostMapping("/login")
+                public String showWelcomePage(@RequestParam String name, String password, ModelMap model) {
+
+                    if (!service.validateUser(name, password)) {
+                        model.put("errorMessage", "Wrong credentials, try again");
+                        return "login";
+                    } else {
+                        model.put("name", name);
+                        model.put("password", password);
+                        return "welcome";
+                    }
+                }
+            }
+
+
+            @Controller
+            @SessionAttributes("name")
+            public class ToDoController {
+
+                @Autowired
+                ToDoService service;
+
+                @GetMapping("/list-todos")
+                public String showToDos(ModelMap model) {
+                    String name = (String)model.get("name");
+                    model.put("todos", service.retrieveToDos(name));
+                    return "list-todos";
+                }
+
+            }
+
+
+ADD FORM:
+
+            <html>
+                <head>
+                    <title>Add ToDo</title>
+                </head>
+                <body>
+                ADD ToDo Page for ${name}
+                <form method="post">
+                    Description : <input name="desc" type="text"/>
+                                <input type="submit"/>
+                </form>
+                </body>
+            </html>
+
+PROCESSING FORM AND REDIRECTING TO LIST:
+
+            @GetMapping("/add-todo")
+            public String addToDo(ModelMap model) {
+                return "todo";
+            }
+
+            @PostMapping("/add-todo")
+            public String addToDoPage(ModelMap model, @RequestParam String desc) {
+                service.addTodo((String)model.get("name"), desc, new Date(), false);
+                return  "redirect:/list-todos";
+            }
+
+
+JSTL:
+
+            <dependency>
+                <groupId>javax.servlet</groupId>
+                <artifactId>jstl</artifactId>
+            </dependency>
+
+
+            <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+            <html>
+            <head>
+                <title>ToDos for ${name}</title>
+            </head>
+                <body>
+                    <h1>Your ToDos</h1>
+                    <table>
+                        <caption>Your ToDos are:</caption>
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th>Target Date</th>
+                                <th>Is it Done?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach items="${todos}" var="todo">
+                                <tr>
+                                    <td>${todo.desc}</td>
+                                    <td>${todo.targetDate}</td>
+                                    <td>${todo.done}</td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                    <br>
+                    <a href="/add-todo">Add a ToDo</a>
+                </body>
+            </html>
+
+
+            
