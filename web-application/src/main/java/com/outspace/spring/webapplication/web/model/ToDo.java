@@ -1,13 +1,21 @@
 package com.outspace.spring.webapplication.web.model;
 
+import javax.validation.constraints.Size;
 import java.util.Date;
+import java.util.Objects;
 
 public class ToDo {
     private int id;
     private String user;
+
+    @Size(min=10, message = "Enter at least 10 Characters...")
     private String desc;
     private Date targetDate;
     private boolean isDone;
+
+    public ToDo() {
+
+    }
 
     public ToDo(int id, String user, String desc, Date targetDate, boolean isDone) {
         this.id = id;
@@ -66,5 +74,32 @@ public class ToDo {
                 ", targetDate=" + targetDate +
                 ", isDone=" + isDone +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+       if (this== obj ) {
+           return true;
+       }
+       if (obj == null) {
+           return false;
+       }
+       if (getClass() != obj.getClass()) {
+           return false;
+       }
+       ToDo other = (ToDo) obj;
+       if (id != other.id) {
+           return false;
+        }
+       return true;
+    }
+
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + id;
+        return result;
     }
 }
