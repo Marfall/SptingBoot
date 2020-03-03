@@ -748,4 +748,74 @@ WELCOME:
             </div>
         <%@ include file="common/footer.jspf"%>
 
+
+
+SPRING SECURITY:
+
+
+        <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+        - We need to extend SecurityCofiguration class from  WebSecurityConfigurerAdapter
+        - And override methods:
+
+
+     
+            @Configuration
+            public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+                // Create Users
+                // Create a Login Form
+
+                @Autowired
+                public void configureGlobalSecurity(AuthenticationManagerBuilder auth) throws  Exception {
+                    auth.inMemoryAuthentication()
+                            .withUser("Marfall")
+                            .password("{noop}Marfall")
+                            .roles("USER","ADMIN");
+                }
+
+                @Override
+                protected void configure(HttpSecurity http) throws Exception {
+                    http.authorizeRequests().antMatchers("/login").permitAll()
+                            .antMatchers("/", "/*todo*/**").access("hasRole('USER')").and()
+                            .formLogin();
+                }
+            }
+
+
+METHOD FOR TAKING AUTHENTICATED USER:
+
+
+          private String getLoggedInUserName() {
+            Object principal = SecurityContextHolder.getContext().getAuthentication()
+                    .getPrincipal();
+            if (principal instanceof UserDetails) {
+            return  ((UserDetails) principal).getUsername();
+            }
+            return principal.toString();
+        }
+
+LOGOUT CONTROLLER:
+
+
+        @Controller
+        @SessionAttributes("name")
+        public class LogoutController {
+
+            @GetMapping("/logout")
+            public String logout(HttpServletRequest request, HttpServletResponse response) {
+
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
                 
+                if (authentication!=null) {
+                    new SecurityContextLogoutHandler().logout(request, response, authentication );
+                }
+                return "redirect:/";
+            }
+        }
+
+
+
